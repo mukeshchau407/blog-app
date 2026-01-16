@@ -2,7 +2,10 @@ import React from "react";
 import { useAuth } from "../hooks/useAuth";
 
 const PostDetail = ({ post, onBack, onEdit, onDelete }) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
+
+  // Show actions if user is admin OR if user is the post author
+  const canEditPost = isAdmin || (user && post.userId === user.id);
 
   return (
     <div className="post-detail">
@@ -38,7 +41,7 @@ const PostDetail = ({ post, onBack, onEdit, onDelete }) => {
           <p>{post.body}</p>
         </div>
 
-        {isAdmin && (
+        {canEditPost && (
           <div className="post-detail-actions">
             <button onClick={() => onEdit(post)} className="btn-secondary">
               Edit Post

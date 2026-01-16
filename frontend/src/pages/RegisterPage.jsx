@@ -23,7 +23,7 @@ const RegisterPage = ({ onNavigate }) => {
       newErrors.email = "Invalid email address";
     }
     if (!validatePassword(formData.password)) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = "Password must be at least 8 characters";
     }
 
     if (Object.keys(newErrors).length > 0) {

@@ -775,6 +775,51 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-tertiary);
 }
 
+.label-hint {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-tertiary);
+  font-family: 'Work Sans', sans-serif;
+}
+
+.field-help {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.field-help a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.field-help a:hover {
+  color: var(--accent-secondary);
+  text-decoration: underline;
+}
+
+.image-input {
+  font-family: 'Work Sans', sans-serif;
+}
+
+.image-preview {
+  margin-top: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  max-width: 500px;
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .editor-actions {
   display: flex;
   justify-content: flex-end;

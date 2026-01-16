@@ -3,7 +3,10 @@ import { useAuth } from "../hooks/useAuth";
 
 const PostCard = ({ post, onEdit, onDelete, onView }) => {
   const [showActions, setShowActions] = useState(false);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
+
+  // Show actions if user is admin OR if user is the post author
+  const canEditPost = isAdmin || (user && post.userId === user.id);
 
   return (
     <article
@@ -37,7 +40,7 @@ const PostCard = ({ post, onEdit, onDelete, onView }) => {
 
         <p className="post-excerpt">{post.body.slice(0, 120)}...</p>
 
-        {isAdmin && (
+        {canEditPost && (
           <div className={`post-actions ${showActions ? "visible" : ""}`}>
             <button onClick={() => onEdit(post)} className="btn-text">
               Edit

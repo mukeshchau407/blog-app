@@ -5,6 +5,8 @@ import {
   useCallback,
   useMemo,
 } from "react";
+import { dummyPosts } from "../utils/DummyData.js";
+import { generateAutoImage, isValidImageUrl } from "../utils/ImageUtils.js";
 
 export const PostsContext = createContext(null);
 
@@ -22,24 +24,20 @@ export const PostsProvider = ({ children }) => {
     setError(null);
 
     try {
-      const response = await fetch(
-        "https://jsonplaceholder.typicode.com/posts"
+      // Load dummy posts from local data
+      // Check if we have custom posts in localStorage
+      const customPosts = JSON.parse(
+        localStorage.getItem("blog_posts") || "[]"
       );
-      const data = await response.json();
 
-      // Enhance posts with additional metadata
-      const enhancedPosts = data.slice(0, 30).map((post, idx) => ({
-        ...post,
-        author: `Author ${post.userId}`,
-        date: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-        category: ["Technology", "Design", "Business", "Lifestyle"][idx % 4],
-        image: `https://picsum.photos/seed/${post.id}/800/500`,
-        readTime: Math.floor(Math.random() * 10) + 3,
-      }));
+      // Combine dummy posts with custom posts
+      const allPosts = [...customPosts, ...dummyPosts].sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+      );
 
-      setPosts(enhancedPosts);
+      setPosts(allPosts);
     } catch (err) {
-      setError("Failed to fetch posts. Please try again.");
+      setError("Failed to load posts. Please try again.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -53,25 +51,30 @@ export const PostsProvider = ({ children }) => {
   const addPost = useCallback(async (newPost) => {
     setLoading(true);
     try {
-      const response = await fetch(
-        "https://jsonplaceholder.typicode.com/posts",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newPost),
-        }
-      );
-      const data = await response.json();
+      // Use custom image if provided and valid, otherwise auto-generate
+      let imageUrl = newPost.image;
+
+      if (!imageUrl || !isValidImageUrl(imageUrl)) {
+        // Generate high-quality category-specific image
+        imageUrl = generateAutoImage(newPost.category, newPost.title);
+      }
 
       const enhancedPost = {
-        ...data,
+        ...newPost,
         id: Date.now(),
-        author: newPost.author || "You",
         date: new Date().toISOString(),
-        category: newPost.category || "Uncategorized",
-        image: `https://picsum.photos/seed/${Date.now()}/800/500`,
-        readTime: Math.floor(Math.random() * 10) + 3,
+        image: imageUrl,
+        readTime: Math.ceil(
+          newPost.body.split(" ").filter((w) => w).length / 200
+        ), // ~200 words per minute
       };
+
+      // Save to localStorage
+      const customPosts = JSON.parse(
+        localStorage.getItem("blog_posts") || "[]"
+      );
+      customPosts.unshift(enhancedPost);
+      localStorage.setItem("blog_posts", JSON.stringify(customPosts));
 
       setPosts((prev) => [enhancedPost, ...prev]);
       return enhancedPost;
@@ -86,11 +89,41 @@ export const PostsProvider = ({ children }) => {
   const updatePost = useCallback(async (id, updatedPost) => {
     setLoading(true);
     try {
-      await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedPost),
-      });
+      // Update in localStorage
+      const customPosts = JSON.parse(
+        localStorage.getItem("blog_posts") || "[]"
+      );
+      const postIndex = customPosts.findIndex((p) => p.id === id);
+
+      if (postIndex !== -1) {
+        const oldPost = customPosts[postIndex];
+
+        // Handle image update
+        let imageUrl = updatedPost.image;
+
+        if (!imageUrl) {
+          // No new image provided, keep the old one
+          imageUrl = oldPost.image;
+        } else if (!isValidImageUrl(imageUrl)) {
+          // Invalid URL provided, generate new one
+          imageUrl = generateAutoImage(
+            updatedPost.category || oldPost.category,
+            updatedPost.title || oldPost.title
+          );
+        }
+
+        updatedPost.image = imageUrl;
+
+        // Recalculate read time if body changed
+        if (updatedPost.body) {
+          updatedPost.readTime = Math.ceil(
+            updatedPost.body.split(" ").filter((w) => w).length / 200
+          );
+        }
+
+        customPosts[postIndex] = { ...oldPost, ...updatedPost };
+        localStorage.setItem("blog_posts", JSON.stringify(customPosts));
+      }
 
       setPosts((prev) =>
         prev.map((post) =>
@@ -108,9 +141,12 @@ export const PostsProvider = ({ children }) => {
   const deletePost = useCallback(async (id) => {
     setLoading(true);
     try {
-      await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`, {
-        method: "DELETE",
-      });
+      // Delete from localStorage (only custom posts can be deleted)
+      const customPosts = JSON.parse(
+        localStorage.getItem("blog_posts") || "[]"
+      );
+      const filteredPosts = customPosts.filter((p) => p.id !== id);
+      localStorage.setItem("blog_posts", JSON.stringify(filteredPosts));
 
       setPosts((prev) => prev.filter((post) => post.id !== id));
     } catch (err) {

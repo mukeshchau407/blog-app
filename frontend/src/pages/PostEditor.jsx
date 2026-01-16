@@ -10,6 +10,7 @@ const PostEditor = ({ editingPost, onNavigate }) => {
     title: editingPost?.title || "",
     body: editingPost?.body || "",
     category: editingPost?.category || "Technology",
+    image: editingPost?.image || "",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -98,6 +99,52 @@ const PostEditor = ({ editingPost, onNavigate }) => {
           </div>
 
           <div className="form-group">
+            <label htmlFor="image">
+              Cover Image URL (Optional)
+              <span className="label-hint">
+                Leave empty to use auto-generated image
+              </span>
+            </label>
+            <input
+              id="image"
+              type="url"
+              value={formData.image}
+              onChange={(e) =>
+                setFormData({ ...formData, image: e.target.value })
+              }
+              placeholder="https://example.com/image.jpg"
+              className="image-input"
+            />
+            <p className="field-help">
+              Tip: Use free images from{" "}
+              <a
+                href="https://unsplash.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Unsplash
+              </a>{" "}
+              or{" "}
+              <a
+                href="https://pexels.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Pexels
+              </a>
+            </p>
+            {formData.image && (
+              <div className="image-preview">
+                <img
+                  src={formData.image}
+                  alt="Preview"
+                  onError={(e) => (e.target.style.display = "none")}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
             <label htmlFor="body">Content</label>
             <textarea
               id="body"
@@ -111,7 +158,11 @@ const PostEditor = ({ editingPost, onNavigate }) => {
             />
             {errors.body && <span className="error-text">{errors.body}</span>}
             <div className="character-count">
-              {formData.body.length} characters
+              {formData.body.length} characters ·{" "}
+              {Math.ceil(
+                formData.body.split(" ").filter((w) => w).length / 200
+              )}{" "}
+              min read
             </div>
           </div>
 
